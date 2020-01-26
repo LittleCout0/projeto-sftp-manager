@@ -4,7 +4,7 @@ import fileManager as localFile
 import folderManager as localFolder
 import pysftp
 import os
-import time
+
 
 HOST = '10.176.226.172'#'zrhftp.hq.k.grp'
 USER = 'wsouza'
