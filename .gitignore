@@ -1,2 +1,4 @@
 ENV/*
 ftp_test/
+Version_control/
+test*
