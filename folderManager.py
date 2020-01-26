@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-# trabalhar com PATHLIB para evitar atualizações do python quebre o código
 import os
-import pathlib
 
 
 '''caminho até as Builds: \\10.4.164.16\\sao\\01.Opentv5\\00.Versions\\NET\\6.1'''
