@@ -1,15 +1,15 @@
-#!-*- conding: utf8 -*-
+
 from pathlib import Path as path_manager
 import sys
 import logging
 
-debug = False # Used to avoid Traceback errors when Fails
+debug = True # Used to avoid Traceback errors when Fails
 
 PATH_FOLDER = path_manager("Version_control")
 FILE_NAME = "version_control.txt"
 PATH_COMPLETE = PATH_FOLDER / FILE_NAME 
 #OLDER_BUILD = "6.1.2.55"
-LATEST_BUILD = "6.1.1.3" 
+#LATEST_BUILD = "6.1.1.3" 
 
 
 def pathControl(LATEST_BUILD):
@@ -54,9 +54,9 @@ def checkLatestBuildDownloaded(LATEST_BUILD):
 def createFileControl(LATEST_BUILD):
     with PATH_COMPLETE.open('w') as version_control:
         try:
-            version_control.write(LATEST_BUILD)
+            version_control.write(str(LATEST_BUILD))
             print('File updated to:', LATEST_BUILD)
-            return LATEST_BUILD
+            return str(LATEST_BUILD)
         except (EnvironmentError, IOError, OSError)  as e:
             print('Not possible to open history file:', e)
             return e    
@@ -71,4 +71,3 @@ def exceptionHandler(exception_type, exception, traceback, debug_hook=sys.except
         print(f'\t{exception_type.__name__}: {exception}')# Exception.name: exception
 sys.excepthook = exceptionHandler    
     
-pathControl(LATEST_BUILD)
