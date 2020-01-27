@@ -2,3 +2,5 @@ ENV/*
 ftp_test/
 Version_control/
 test*
+.*
+__pycache__
