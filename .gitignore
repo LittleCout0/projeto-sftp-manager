@@ -4,3 +4,4 @@ Version_control/
 test*
 .*
 __pycache__
+*.bat
