@@ -4,13 +4,7 @@ import logging
 
 debug = True # Used to avoid Traceback errors when Fails
 
-#caminho até as Builds: \\10.4.164.16\\sao\\01.Opentv5\\00.Versions\\NET\\6.1Release
-#path_sub_folder_release = ['release_netbrazil_4tnfx_uhd_hdcp_nasc_integration_noOTA','release_netbrazil_4tnfx_uhd_hdcp_nasc_integration_OTA','release_netbrazil_4tnfx_uhd_hdcp_nasc_production_OTA']
-#path_sub_folder_dev = ['dev_netbrazil_4tnfx_uhd_hdcp_nasc_integration_noOTA','dev_netbrazil_4tnfx_uhd_hdcp_nasc_integration_OTA','dev_netbrazil_4tnfx_uhd_hdcp_nasc_production_OTA']
-#folders_name = ['build_product_release','build_product_sdk','build_product_DEV'] #variavel que virá do sftp
-#sub_folder_name = ['release_netbrazil_4tnfx_uhd_hdcp_nasc_integration_noOTA','release_netbrazil_4tnfx_uhd_hdcp_nasc_integration_OTA','release_netbrazil_4tnfx_uhd_hdcp_nasc_production_OTA']#variavel que virá do sftp
-#build_name = '6.1.2.10'
-LOCAL_PATH = path_manager(r'C:\Users\wsouza\Desktop\SFTP Project')
+LOCAL_PATH = path_manager(r'Z:\01.Opentv5\00.Versions\NET\Release6.1')
 
 def createBuildNameFolder(build_name):
     if(LOCAL_PATH.exists()):
@@ -81,7 +75,7 @@ for sdk in path_product_folder:
         
 for folder_name in path_product_folder:
     try:
-        #wa_new_path = new_local_path #WorkAround!
+        #wa_new_path = new_local_path 
         new_local_path = new_local_path / createLocalFolders(new_local_path, folder_name)
         for sub_folder_name in path_sub_folder:
             createLocalSubFolders(new_local_path, sub_folder_name)  
