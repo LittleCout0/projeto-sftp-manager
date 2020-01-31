@@ -5,6 +5,7 @@ import logging
 debug = True # Used to avoid Traceback errors when Fails
 
 LOCAL_PATH = path_manager(r'Z:\01.Opentv5\00.Versions\NET\Release6.1')
+logging.basicConfig(filename='folder_manager.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
 
 def createBuildNameFolder(build_name):
     if(LOCAL_PATH.exists()):
@@ -14,6 +15,7 @@ def createBuildNameFolder(build_name):
             return LOCAL_PATH / build_name
         
         except (EnvironmentError, IOError, OSError) as e:
+            logging.exception('An error occured to create build folder')
             print(e)
     
     elif not(LOCAL_PATH.exists()):
@@ -26,6 +28,7 @@ def createSTBModelFolder(new_path, stb_model):
         return new_path / stb_model
     
     except (EnvironmentError, IOError, OSError) as e:
+        logging.exception('An error occured to create STB model folder')
         print(e)
 
 def createBuildTypeFolder(new_path, mw_type):
@@ -35,6 +38,7 @@ def createBuildTypeFolder(new_path, mw_type):
         return new_path / mw_type
     
     except (EnvironmentError, IOError, OSError) as e:
+        logging.exception('An error occured to create build type folder')
         print(e)
         
 def createLocalFolders(new_path,folder_name):
@@ -43,6 +47,7 @@ def createLocalFolders(new_path,folder_name):
         return new_path / folder_name
     
     except (EnvironmentError, IOError, OSError) as e:
+        logging.exception('An error occured to create local folders')
         print(e)
 
 
@@ -52,6 +57,7 @@ def createLocalSubFolders(new_path, sub_folder_name):
         return new_path / sub_folder_name
     
     except (EnvironmentError, IOError, OSError) as e:
+        logging.exception('An error occured to create sub-folders')
         print(e)
   
 # Function to not print traceback unless debug is True
