@@ -10,6 +10,7 @@ FILE_NAME = "version_control.txt"
 PATH_COMPLETE = PATH_FOLDER / FILE_NAME 
 #OLDER_BUILD = "6.1.2.55"
 #LATEST_BUILD = "6.1.1.5" 
+logging.basicConfig(filename='file_manager.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
 
 '''
 0 - Go ahead and download
@@ -25,6 +26,7 @@ def pathControl(LATEST_BUILD):
             return checkLatestBuildDownloaded(LATEST_BUILD)                  
                 
         except (EnvironmentError, IOError, OSError) as e:
+            logging.exception('An error occured on Path Control function')
             return e
             
     elif not(PATH_FOLDER.exists()):
@@ -33,7 +35,8 @@ def pathControl(LATEST_BUILD):
     
     else:
         print('File not exists. Creating a new one...')
-        return createFileControl(LATEST_BUILD)
+        createFileControl(LATEST_BUILD)
+        return 2
         
 
 def checkLatestBuildDownloaded(LATEST_BUILD):
@@ -56,6 +59,7 @@ def checkLatestBuildDownloaded(LATEST_BUILD):
 
         except (EnvironmentError, IOError, OSError)  as e:
             print('Not possible to open history file:', e)
+            logging.exception('An error occured to check the latest build downloaded')
             return e
 
 def createFileControl(LATEST_BUILD):
@@ -66,6 +70,7 @@ def createFileControl(LATEST_BUILD):
             return str(LATEST_BUILD)
         except (EnvironmentError, IOError, OSError)  as e:
             print('Not possible to open history file:', e)
+            logging.exception('An error occured to create file control')
             return e    
 
 # Function to not print traceback unless debug is True
