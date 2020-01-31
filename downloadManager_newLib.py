@@ -1,9 +1,9 @@
 from paramiko import SSHClient, AutoAddPolicy
 import fileManager_newLib as localFile
 import folderManager_newLib as localFolder
-from tqdm import tqdm
-import os
 from pathlib import Path as path_manager
+from tqdm import tqdm
+import logging
 
 HOST = 'zrhftp.hq.k.grp'
 USER = 'wsouza'
@@ -11,6 +11,8 @@ PWORD = 'Willi@m.07'
 PORT = 22
 
 ######################################################################################################################################################################
+
+logging.basicConfig(filename='download_manager.log', filemode='w', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # VARs to change PATHs and download others Brands and/or MWs
 
@@ -58,7 +60,7 @@ def connectionToServer():
         return client
     except (Exception) as e:
         print('Connection failed. Error:',e)
-        client.close
+        logging.exception('An error occured to connect in Zurich server')
         return False
             
 def getLatestBuildNameFromServer(client):
@@ -78,6 +80,7 @@ def getLatestBuildNameFromServer(client):
 
     except (EnvironmentError, IOError, OSError) as e:
         print(e)
+        logging.exception('An error occured to get latest build from server')
 
 def getLatestBuildDownloadLocally(latest_build):
     status = localFile.pathControl(latest_build)
@@ -139,6 +142,7 @@ def startDownloadProcess(client, build_name):
 
     except (EnvironmentError, IOError, OSError) as e:
         print(e)
+        logging.exception('An error occured to start download process')
 
 def createLocalDirectories(sftp, remote_dir, local_path):
     current_path = []
@@ -154,7 +158,7 @@ def createLocalDirectories(sftp, remote_dir, local_path):
 def downloadFiles(sftp, current_path, remote_path):
     file_name_for_progress_bar = "" # Not necessary, just a good view to progress bar
     callback_progressbar, progressbar = progressBarView(ascii=False, desc=file_name_for_progress_bar, unit='b', unit_scale=True)
-    i = 0
+    i = 0 # To control the current_path folders list
 
     for remote_dir in remote_path:
         print(remote_dir)
@@ -178,7 +182,8 @@ def progressBarView(*args, **kwargs):
         return viewBar, progressbar  # return callback, tqdmInstance   
         
     except Exception as e:
-        print('Error:',e)         
+        print('Error:',e)   
+        logging.exception('An error occured to use progress bar function')      
 
 
 if __name__ == '__main__':
