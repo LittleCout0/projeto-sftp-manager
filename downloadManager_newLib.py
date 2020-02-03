@@ -10,10 +10,16 @@ USER = 'wsouza'
 PWORD = 'Willi@m.07'
 PORT = 22
 
-######################################################################################################################################################################
+##### Log environment ###############################################################################################################################################
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+file_handler = logging.FileHandler('logs/download_manager.log')
+formatter = logging.Formatter('%(asctime)s: %(levelname)s : %(name)s : %(message)s')
+file_handler.setFormatter(formatter)
+log.addHandler(file_handler)
+#####################################################################################################################################################################
 
-logging.basicConfig(filename='download_manager.log', filemode='w', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
+#####################################################################################################################################################################
 # VARs to change PATHs and download others Brands and/or MWs
 
 ROOT = '/nfs/OpentvOS'
@@ -42,7 +48,7 @@ FILES_TO_NOT_DOWNLOAD = [
     'otv5_loader_kernel_squashfs.bin',
     'DGCI362_IMAGE', 
     'ubifs-128k-2048-7260a0.img',
-    'rootfs.tar.bz2'
+    'rootfs.tar.bz2',
     'zImage'
 ]
 
@@ -54,21 +60,24 @@ def connectionToServer():
     try:
         client = SSHClient()
         print('Connecting to', HOST)
+        log.info('Connecting to server')
         client.set_missing_host_key_policy(AutoAddPolicy())
         client.connect(HOST, PORT, username=USER, password=PWORD)
         print('Connection established!')
+        log.info('Connection established')
         return client
     except (Exception) as e:
         print('Connection failed. Error:',e)
-        logging.exception('An error occured to connect in Zurich server')
+        log.exception('An error occured to connect in Zurich server')
         return False
             
 def getLatestBuildNameFromServer(client):
 
     # Compare Modification time folder by folder
     sftp = client.open_sftp()
-    try:   
+    try:
         dir_MW_528 = sftp.listdir_attr(PATH_MW_528.as_posix())
+        log.info(f'Getting latest modified folder from {dir_MW_528}')
         latest = 0
         latest_folder = None
 
@@ -76,11 +85,12 @@ def getLatestBuildNameFromServer(client):
             if folder_attribute.st_mtime > latest:
                 latest = folder_attribute.st_mtime # Flag from Paramiko lib: Modification Time 
                 latest_folder = folder_attribute.filename
+        log.info(f'Latest modified folder: {latest_folder}')
         return path_manager(latest_folder)
 
     except (EnvironmentError, IOError, OSError) as e:
         print(e)
-        logging.exception('An error occured to get latest build from server')
+        log.exception('An error occured to get latest build from server')
 
 def getLatestBuildDownloadLocally(latest_build):
     status = localFile.pathControl(latest_build)
@@ -94,19 +104,23 @@ def getLatestBuildDownloadLocally(latest_build):
 
     if status == 0:
         # Go ahead and download
+        log.info('Status == 0. Go ahead and download')
         return True
 
     elif status == 1:
         # It's already downloaded
+        log.info('Status == 1. It is already downloaded')
         return False       
     
     elif status == 2:
         # Go ahead and download. Version control wasn't created yet
+        log.info('Status == 2. Go ahead and download. Version control was not created yet')
         return True
 
     elif status == 3:
         # Fail
         print('Please check if Version_control folder exists')
+        log.error('Status == 3. Fail (Version_control folder exist?).')
         return False
 
 
@@ -119,6 +133,7 @@ def startDownloadProcess(client, build_name):
     sftp = client.open_sftp()
     build_path = PATH_MW_528 / build_name / STB_MODEL_MW_528 # /nfs/OpentvOS/v5.2.8/NET/build_name/dgci362_unified_glibc_bc/
     print('Path:', build_path.as_posix())
+    log.info(f'Path created to start download process: {build_path} ')
     build_name_clean = getBuildNameFromDir(build_name) # Take build name without unnecessary words to persist on Build Number Control (txt)
 
     try:
@@ -142,7 +157,7 @@ def startDownloadProcess(client, build_name):
 
     except (EnvironmentError, IOError, OSError) as e:
         print(e)
-        logging.exception('An error occured to start download process')
+        log.exception('An error occured to start download process')
 
 def createLocalDirectories(sftp, remote_dir, local_path):
     current_path = []
@@ -167,6 +182,7 @@ def downloadFiles(sftp, current_path, remote_path):
             if remote_file.filename not in FILES_TO_NOT_DOWNLOAD:
                 print(remote_file.filename)
                 sftp.get(path_manager.joinpath(remote_dir, remote_file.filename).as_posix(), path_manager.joinpath(current_path[i], remote_file.filename), callback_progressbar)      
+        log.info(f'Files downloaded:{path_manager.joinpath(current_path[i], remote_file.filename)}')
         i += 1
     progressbar.close()
 
@@ -183,7 +199,7 @@ def progressBarView(*args, **kwargs):
         
     except Exception as e:
         print('Error:',e)   
-        logging.exception('An error occured to use progress bar function')      
+        log.exception('An error occured to use progress bar function')      
 
 
 if __name__ == '__main__':
