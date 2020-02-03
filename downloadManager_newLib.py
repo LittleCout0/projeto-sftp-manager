@@ -58,7 +58,7 @@ FILES_TO_NOT_DOWNLOAD = [
 
 def connectionToServer():
     try:
-        client = SSHClient()
+        client = SSHClient() 
         print('Connecting to', HOST)
         log.info('Connecting to server')
         client.set_missing_host_key_policy(AutoAddPolicy())
@@ -67,7 +67,7 @@ def connectionToServer():
         log.info('Connection established')
         return client
     except (Exception) as e:
-        print('Connection failed. Error:',e)
+        print('Not possible to connect. Error:',e)
         log.exception('An error occured to connect in Zurich server')
         return False
             
