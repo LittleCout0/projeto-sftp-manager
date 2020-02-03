@@ -5,4 +5,4 @@ test*
 .*
 __pycache__
 *.bat
-*.log
+logs/
