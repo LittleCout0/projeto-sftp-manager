@@ -171,7 +171,7 @@ def createLocalDirectories(sftp, remote_dir, local_path):
     return downloadFiles(sftp, current_path, remote_path)
     
 def downloadFiles(sftp, current_path, remote_path):
-    file_name_for_progress_bar = "" # Not necessary, just a good view to progress bar
+    file_name_for_progress_bar = "" # Not necessary, just a improve to progress bar
     callback_progressbar, progressbar = progressBarView(ascii=False, desc=file_name_for_progress_bar, unit='b', unit_scale=True)
     i = 0 # To control the current_path folders list
 
