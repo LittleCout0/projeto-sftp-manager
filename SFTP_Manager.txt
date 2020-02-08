@@ -1,0 +1,46 @@
+Problema:
+Ao terminar de baixar um MW temos que trigar o download de outro
+
+Solução:
+Loop? Outro arquivo fazendo esse papel? Deixamos no mesmo arquivo?
+
+
+MW 528
+/nfs/OpentvOS/v5.2.8/NET/build_name/dgci362_unified_glibc_bc/
+/nfs/OpentvOS/v5.2.8/NET/build_name/dci738net_glibc_bc/
+
+Problema:
+MW 528 tem duas builds para baixar
+Mesma estrutura de sub-folders
+
+
+Solução:
+Loop no startDownload?
+
+
+MW 524
+Problema:
+Estrutura muito diferente do 528 para sub-folders
+As vezes as pastas não existem no remoto, somente arquivo zipado
+
+Solução:
+-Deixar flags dinamicas no gerenciador de pastas
+-Ao chavear para MW X as flags serão modificadas e as pastas locais criadas de acordo
+-Usar flag is_file ou is_folder para validar se baixamos o arquivo ou acessamos a pasta
+-Necessário refatorar funções de download e parâmetros como current_path, visto que
+a implementação foi feita para 528
+
+
+MW 513
+Problema:
+Estrutura totalmente diferente do 528 e 524
+As builds não são separadas por brand
+Uma lista enorme de SDK e REL com 3P e 2T todas misturadas
+As pastas locais precisam ser criadas de forma a não impactar o Chuleta flash box
+
+Solução:
+-Podemos popular array e eliminar as pastas que tiverem com o nome deste array (utilizado no 528)
+-Flags dinamicas no gerenciador de pastas
+-Devemos informar ao gerenciador de pastas: BRAND / TUNER 
+-Se complexo demais para script, podemos simplesmente baixar diretamente para as 
+pastas sem criar os tuners.. 
