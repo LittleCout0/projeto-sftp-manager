@@ -5,8 +5,7 @@ import logging
 
 debug = True # Used to avoid Traceback errors when Fails
 
-#PATH_FOLDER = path_manager(r"Z:\01.Opentv5\16.Version_control")
-PATH_FOLDER = path_manager(r"C:\Users\William\Desktop\SFTP Project\Version_control")
+PATH_FOLDER = path_manager(r"Z:\01.Opentv5\16.Version_control")
 FILE_NAME_MW528 = "version_control_528.txt"
 FILE_NAME_MW524 = "version_control_524.txt"
 FILE_NAME_MW513 = "version_control_513.txt"
