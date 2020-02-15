@@ -5,11 +5,12 @@ import logging
 
 debug = True # Used to avoid Traceback errors when Fails
 
-PATH_FOLDER = path_manager(r"Z:\01.Opentv5\16.Version_control")
-FILE_NAME = "version_control.txt"
-PATH_COMPLETE = PATH_FOLDER / FILE_NAME 
-#OLDER_BUILD = "6.1.2.55"
-#LATEST_BUILD = "Build6.1.2.7_1166816" 
+#PATH_FOLDER = path_manager(r"Z:\01.Opentv5\16.Version_control")
+PATH_FOLDER = path_manager(r"C:\Users\William\Desktop\SFTP Project\Version_control")
+FILE_NAME_MW528 = "version_control_528.txt"
+FILE_NAME_MW524 = "version_control_524.txt"
+FILE_NAME_MW513 = "version_control_513.txt"
+MW_VERSION_LIST = ['v5.2.8', 'v5.2.4','v5.1.3']
 
 ##### Log environment #################################################################
 log = logging.getLogger(__name__)
@@ -27,43 +28,62 @@ log.addHandler(file_handler)
 3 - Fail 
 '''
 
-def pathControl(LATEST_BUILD):
-    if PATH_FOLDER.exists() and PATH_COMPLETE.exists():
-        try:
-            print('Checking latest build downloaded')
-            log.info('Checking latest build downloaded')
-            return checkLatestBuildDownloaded(LATEST_BUILD)                  
-                
-        except (EnvironmentError, IOError, OSError) as e:
-            log.exception('An error occured on Path Control function')
-            return e
-            
-    elif not(PATH_FOLDER.exists()):
-        print('Folder not found:', PATH_FOLDER)
-        log.warning(f'Folder not found: {PATH_FOLDER}')
-        return 3
+def pathControl(LATEST_BUILD, MW_VERSION):
     
-    else:
-        print('File not exist. Creating a new one...')
-        createFileControl(LATEST_BUILD)
-        log.info('File does not exist. Creating a new one.')
-        return 2
+    if(MW_VERSION in MW_VERSION_LIST):
+        PATH_COMPLETE = validateMWVersion(MW_VERSION)
         
+        if PATH_FOLDER.exists() and PATH_COMPLETE.exists() :
+            try:
+                print('Checking latest build downloaded')
+                log.info('Checking latest build downloaded')
+                return checkLatestBuildDownloaded(LATEST_BUILD, PATH_COMPLETE, MW_VERSION)                  
+                    
+            except (EnvironmentError, IOError, OSError) as e:
+                log.exception('An error occured on Path Control function')
+                return e
+                
+        elif not(PATH_FOLDER.exists()):
+            print('Folder not found:', PATH_FOLDER)
+            log.warning(f'Folder not found: {PATH_FOLDER}')
+            return 3
+        
+        else:
+            print('File not exist. Creating a new one...')
+            createFileControl(LATEST_BUILD, PATH_COMPLETE)
+            log.info('File does not exist. Creating a new one.')
+            return 2
+    else:
+        print('MW not found:', PATH_FOLDER)
+        log.warning(f'MW not found: {PATH_FOLDER}')
+        return 3
+        
+        
+def validateMWVersion(MW_VERSION):
+    if(MW_VERSION == 'v5.2.8'):
+        return PATH_FOLDER / FILE_NAME_MW528
+   
+    elif(MW_VERSION == 'v5.2.4'):
+        return PATH_FOLDER / FILE_NAME_MW524
+        
+    elif(MW_VERSION == 'v5.1.3'):
+        return PATH_FOLDER / FILE_NAME_MW513
+    
 
-def checkLatestBuildDownloaded(LATEST_BUILD):
+def checkLatestBuildDownloaded(LATEST_BUILD, PATH_COMPLETE, MW_VERSION):
     with PATH_COMPLETE.open() as version_control:
         try:
             OLDER_BUILD = version_control.read()
             if OLDER_BUILD == '':
                 print('File is empty. Creating a new one with build name received:',LATEST_BUILD)
                 log.warning(f'File is empty. Creating a new one with build name {LATEST_BUILD}')
-                createFileControl(LATEST_BUILD)
+                createFileControl(LATEST_BUILD, PATH_COMPLETE)
                 return 2
             elif OLDER_BUILD != LATEST_BUILD and OLDER_BUILD != '':
                 print(f'Build {LATEST_BUILD} received is different of {OLDER_BUILD} from history.')
                 print('Updating latest build from local file...')
                 log.info(f'Updating latest build {LATEST_BUILD} from local file')
-                createFileControl(LATEST_BUILD)
+                createFileControl(LATEST_BUILD, PATH_COMPLETE)
                 return 0
             else:
                 print(f'Build {LATEST_BUILD} received is the same of {OLDER_BUILD} from history.')
@@ -76,7 +96,7 @@ def checkLatestBuildDownloaded(LATEST_BUILD):
             log.exception('An error occured to check the latest build downloaded')
             return e
 
-def createFileControl(LATEST_BUILD):
+def createFileControl(LATEST_BUILD, PATH_COMPLETE):
     with PATH_COMPLETE.open('w') as version_control:
         try:
             version_control.write(str(LATEST_BUILD))
@@ -96,4 +116,4 @@ def exceptionHandler(exception_type, exception, traceback, debug_hook=sys.except
         debug_hook(exception_type, exception, traceback)
     else:
         print(f'\t{exception_type.__name__}: {exception}')# Exception.name: exception
-sys.excepthook = exceptionHandler    
+sys.excepthook = exceptionHandler
