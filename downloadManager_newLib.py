@@ -20,16 +20,6 @@ log.addHandler(file_handler)
 #####################################################################################################################################################################
 
 #####################################################################################################################################################################
-# VARs to change PATHs and download others Brands and/or MWs
-
-ROOT = '/nfs/OpentvOS'
-STB_BRAND_528_SAGEM = 'dgci362_unified_glibc_bc'
-STB_BRAND_528_TECH = 'dci738net_glibc_bc'
-
-MW_VERSION_513 = 'v5.1.3'
-MW_VERSION_524 = 'v5.2.4'
-MW_VERSION_528 = 'v5.2.8'
-PATH_NET_FOLDER = 'NET'
 
 # MW 528
 PRODUCT_TO_NOT_DOWNLOAD_MW_528 = 'build_product_sdk'
@@ -130,8 +120,13 @@ def getBuildNameFromDir(build_path):
     return path_manager(''.join(''.join(str(build_path).split('Build')).split('/'))) 
 
 def startPathCreator(client, build_name, PATH_MW, STB_MODEL):
+
     sftp = client.open_sftp()
-    build_path = PATH_MW / build_name / STB_MODEL # /nfs/OpentvOS/v5.2.8/NET/build_name/tech_sagem_humax/
+    if(STB_MODEL):
+        build_path = PATH_MW / build_name / STB_MODEL # /nfs/OpentvOS/v5.x.x/NET/build_name/brand/
+    elif not(STB_MODEL):
+        build_path = PATH_MW / build_name
+        
     print('Path:', build_path.as_posix())
     log.info(f'Path created to start download process: {build_path} ')
     build_name_clean = getBuildNameFromDir(build_name) # Take build name without unnecessary words to persist on Build Number Control (txt)
@@ -208,7 +203,7 @@ def startDownloadProcess(PATH_ROOT, MW_VERSION, STB_MODEL):
         print('Finishing script...')
     
     else:
-        PATH_MW = path_manager.joinpath(PATH_ROOT, MW_VERSION, PATH_NET_FOLDER) #/nfs/OpentvOS/v5.x.x/NET/
+        PATH_MW = path_manager.joinpath(PATH_ROOT, MW_VERSION, 'NET') #/nfs/OpentvOS/v5.x.x/NET/
 
         latestBuild = getLatestBuildNameFromServer(client, PATH_MW)
         print('Latest Build from Server:', latestBuild)
