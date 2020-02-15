@@ -71,17 +71,17 @@ def connectionToServer():
         log.exception('An error occured to connect in Zurich server')
         return False
             
-def getLatestBuildNameFromServer(client):
+def getLatestBuildNameFromServer(client, PATH_MW):
 
     # Compare Modification time folder by folder
     sftp = client.open_sftp()
     try:
-        dir_MW_528 = sftp.listdir_attr(PATH_MW_528.as_posix())
-        log.info(f'Getting latest modified folder from {dir_MW_528}')
+        dir_MW = sftp.listdir_attr(PATH_MW.as_posix())
+        log.info(f'Getting latest modified folder from {dir_MW}')
         latest = 0
         latest_folder = None
 
-        for folder_attribute in dir_MW_528:
+        for folder_attribute in dir_MW:
             if folder_attribute.st_mtime > latest:
                 latest = folder_attribute.st_mtime # Flag from Paramiko lib: Modification Time 
                 latest_folder = folder_attribute.filename
@@ -92,8 +92,8 @@ def getLatestBuildNameFromServer(client):
         print(e)
         log.exception('An error occured to get latest build from server')
 
-def getLatestBuildDownloadLocally(latest_build):
-    status = localFile.pathControl(latest_build)
+def getLatestBuildDownloadLocally(latest_build, MW_VERSION):
+    status = localFile.pathControl(latest_build, MW_VERSION)
 
     '''
     0 - Go ahead and download
@@ -129,9 +129,9 @@ def getBuildNameFromDir(build_path):
     # After clean it: '6.x.x.x_0123456'
     return path_manager(''.join(''.join(str(build_path).split('Build')).split('/'))) 
 
-def startDownloadProcess(client, build_name):
+def startPathCreator(client, build_name, PATH_MW, STB_MODEL):
     sftp = client.open_sftp()
-    build_path = PATH_MW_528 / build_name / STB_MODEL_MW_528 # /nfs/OpentvOS/v5.2.8/NET/build_name/dgci362_unified_glibc_bc/
+    build_path = PATH_MW / build_name / STB_MODEL # /nfs/OpentvOS/v5.2.8/NET/build_name/tech_sagem_humax/
     print('Path:', build_path.as_posix())
     log.info(f'Path created to start download process: {build_path} ')
     build_name_clean = getBuildNameFromDir(build_name) # Take build name without unnecessary words to persist on Build Number Control (txt)
@@ -144,22 +144,22 @@ def startDownloadProcess(client, build_name):
             if not(folders.filename == PRODUCT_TO_NOT_DOWNLOAD_MW_528):
                 path_product_folder.append(folders.filename)
 
-        new_local_path = path_manager(localFolder.createSTBModelFolder(path_manager(localFolder.createBuildNameFolder(build_name_clean)), STB_MODEL_MW_528)) # STB Model folder
+        new_local_path = path_manager(localFolder.createLocalFolders(path_manager(localFolder.createBuildNameFolder(build_name_clean)), STB_MODEL)) # STB Model folder
                 
         # Loop to create all Build_Production_XPTO 
         for folder in path_product_folder:
-            localFolder.createBuildTypeFolder(new_local_path, folder)
+            localFolder.createLocalFolders(new_local_path, folder)
 
         # Create local sub-folders from Build_Production_XPTO
         # /nfs/OpentvOS/v5.2.8/NET/build_name/STB_Model/build_production_XPTO
         for folder in path_product_folder:
-            createLocalDirectories(sftp, path_manager.joinpath(build_path, path_manager(folder)).as_posix(), path_manager.joinpath(new_local_path, folder))
+            createLocalSubDirectories(sftp, path_manager.joinpath(build_path, path_manager(folder)).as_posix(), path_manager.joinpath(new_local_path, folder))
 
     except (EnvironmentError, IOError, OSError) as e:
         print(e)
         log.exception('An error occured to start download process')
 
-def createLocalDirectories(sftp, remote_dir, local_path):
+def createLocalSubDirectories(sftp, remote_dir, local_path):
     current_path = []
     remote_path = []
     
@@ -174,7 +174,7 @@ def downloadFiles(sftp, current_path, remote_path):
     file_name_for_progress_bar = "" # Not necessary, just a improve to progress bar
     callback_progressbar, progressbar = progressBarView(ascii=False, desc=file_name_for_progress_bar, unit='b', unit_scale=True)
     i = 0 # To control the current_path folders list
-
+    
     for remote_dir in remote_path:
         print(remote_dir)
         for remote_file in sftp.listdir_attr(remote_dir.as_posix()):
@@ -202,13 +202,36 @@ def progressBarView(*args, **kwargs):
         log.exception('An error occured to use progress bar function')      
 
 
-if __name__ == '__main__':
-    STB_BRAND_528 = path_manager(STB_BRAND_528_SAGEM)
-    MW_VERSION = path_manager(MW_VERSION_528)
-    PATH_ROOT = path_manager(ROOT)
+def startDownloadProcess(PATH_ROOT, MW_VERSION, STB_MODEL):
+    client = connectionToServer()
+    if (client == False):
+        print('Finishing script...')
+    
+    else:
+        PATH_MW = path_manager.joinpath(PATH_ROOT, MW_VERSION, PATH_NET_FOLDER) #/nfs/OpentvOS/v5.x.x/NET/
 
-    PATH_MW_528 = path_manager.joinpath(PATH_ROOT, MW_VERSION, PATH_NET_FOLDER)
-    STB_MODEL_MW_528 = path_manager(STB_BRAND_528)
+        latestBuild = getLatestBuildNameFromServer(client, PATH_MW)
+        print('Latest Build from Server:', latestBuild)
+        status = getLatestBuildDownloadLocally(str(latestBuild.name), MW_VERSION)
+        
+        if(status == True):
+            startPathCreator(client, latestBuild, PATH_MW, STB_MODEL)
+        
+        elif(status == False):
+            print('Finishing script...')
+        
+        else:
+            print('Finishing script...')
+    client.close()    
+         
+'''
+if __name__ == '__main__':
+    STB_BRAND_528 = path_manager(STB_BRAND_528_SAGEM) 'dgci362_unified_glibc_bc'
+    MW_VERSION = path_manager(MW_VERSION_528) 'v5.2.8'
+    PATH_ROOT = path_manager(ROOT) '/nfs/OpentvOS'
+
+    PATH_MW_528 = path_manager.joinpath(PATH_ROOT, MW_VERSION, PATH_NET_FOLDER)'/nfs/OpentvOS/v5.2.8/NET/
+    STB_MODEL_MW_528 = path_manager(STB_BRAND_528) 'dgci362_unified_glibc_bc'
 
     client = connectionToServer()
     if (client == False):
@@ -220,7 +243,7 @@ if __name__ == '__main__':
         status = getLatestBuildDownloadLocally(str(latestBuild.name))
         
         if(status == True):
-            startDownloadProcess(client, latestBuild)
+            startPathCreator(client, latestBuild)
         
         elif(status == False):
             print('Finishing script...')
@@ -228,3 +251,4 @@ if __name__ == '__main__':
         else:
             print('Finishing script...')
     client.close()
+'''
