@@ -1,5 +1,6 @@
 
 from pathlib import Path as path_manager
+import pathlib
 import sys
 import logging
 
@@ -28,15 +29,14 @@ log.addHandler(file_handler)
 '''
 
 def pathControl(LATEST_BUILD, MW_VERSION):
-    
-    if(MW_VERSION in MW_VERSION_LIST):
-        PATH_COMPLETE = validateMWVersion(MW_VERSION)
-        
-        if PATH_FOLDER.exists() and PATH_COMPLETE.exists() :
+    if(MW_VERSION.name in MW_VERSION_LIST):
+        PATH_COMPLETE = path_manager.joinpath(validateMWVersion(MW_VERSION))
+
+        if PATH_FOLDER.exists() and PATH_COMPLETE.exists():
             try:
                 print('Checking latest build downloaded')
                 log.info('Checking latest build downloaded')
-                return checkLatestBuildDownloaded(LATEST_BUILD, PATH_COMPLETE, MW_VERSION)                  
+                return checkLatestBuildDownloaded(LATEST_BUILD, PATH_COMPLETE)                  
                     
             except (EnvironmentError, IOError, OSError) as e:
                 log.exception('An error occured on Path Control function')
@@ -49,7 +49,7 @@ def pathControl(LATEST_BUILD, MW_VERSION):
         
         else:
             print('File not exist. Creating a new one...')
-            createFileControl(LATEST_BUILD, PATH_COMPLETE)
+            #createFileControl(LATEST_BUILD, PATH_COMPLETE)
             log.info('File does not exist. Creating a new one.')
             return 2
     else:
@@ -59,30 +59,30 @@ def pathControl(LATEST_BUILD, MW_VERSION):
         
         
 def validateMWVersion(MW_VERSION):
-    if(MW_VERSION == 'v5.2.8'):
+    if(MW_VERSION.name == 'v5.2.8'):
         return PATH_FOLDER / FILE_NAME_MW528
    
-    elif(MW_VERSION == 'v5.2.4'):
+    elif(MW_VERSION.name == 'v5.2.4'):
         return PATH_FOLDER / FILE_NAME_MW524
         
-    elif(MW_VERSION == 'v5.1.3'):
+    elif(MW_VERSION.name == 'v5.1.3'):
         return PATH_FOLDER / FILE_NAME_MW513
     
 
-def checkLatestBuildDownloaded(LATEST_BUILD, PATH_COMPLETE, MW_VERSION):
+def checkLatestBuildDownloaded(LATEST_BUILD, PATH_COMPLETE):
     with PATH_COMPLETE.open() as version_control:
         try:
             OLDER_BUILD = version_control.read()
             if OLDER_BUILD == '':
                 print('File is empty. Creating a new one with build name received:',LATEST_BUILD)
                 log.warning(f'File is empty. Creating a new one with build name {LATEST_BUILD}')
-                createFileControl(LATEST_BUILD, PATH_COMPLETE)
+                #createFileControl(LATEST_BUILD, PATH_COMPLETE)
                 return 2
             elif OLDER_BUILD != LATEST_BUILD and OLDER_BUILD != '':
                 print(f'Build {LATEST_BUILD} received is different of {OLDER_BUILD} from history.')
                 print('Updating latest build from local file...')
                 log.info(f'Updating latest build {LATEST_BUILD} from local file')
-                createFileControl(LATEST_BUILD, PATH_COMPLETE)
+                #createFileControl(LATEST_BUILD, PATH_COMPLETE)
                 return 0
             else:
                 print(f'Build {LATEST_BUILD} received is the same of {OLDER_BUILD} from history.')
@@ -95,7 +95,9 @@ def checkLatestBuildDownloaded(LATEST_BUILD, PATH_COMPLETE, MW_VERSION):
             log.exception('An error occured to check the latest build downloaded')
             return e
 
-def createFileControl(LATEST_BUILD, PATH_COMPLETE):
+def createFileControl(LATEST_BUILD, MW_VERSION):
+    PATH_COMPLETE = path_manager.joinpath(validateMWVersion(MW_VERSION))
+    
     with PATH_COMPLETE.open('w') as version_control:
         try:
             version_control.write(str(LATEST_BUILD))

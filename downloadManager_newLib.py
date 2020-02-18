@@ -5,11 +5,6 @@ from pathlib import Path as path_manager
 from tqdm import tqdm
 import logging
 
-HOST = 'zrhftp.hq.k.grp'
-USER = 'wsouza'
-PWORD = 'Willi@m.07'
-PORT = 22
-
 ##### Log environment ###############################################################################################################################################
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -39,97 +34,36 @@ FILES_TO_NOT_DOWNLOAD = [
     'DGCI362_IMAGE', 
     'ubifs-128k-2048-7260a0.img',
     'rootfs.tar.bz2',
-    'zImage'
+    'zImageDTB',
+    'zImage',
+    'ubifs-128k-2048-7429b0.img',
+    'vmlinuz-main',
+    'dci738net_usbpayload',
+    'kernel_dci738net.ssv',
+    'kernel_dci738net.ssv.tmm',
+    'vmlinux.bin'
 ]
 
 
 #####################################################################################################################################################################
 
-
-def connectionToServer():
-    try:
-        client = SSHClient() 
-        print('Connecting to', HOST)
-        log.info('Connecting to server')
-        client.set_missing_host_key_policy(AutoAddPolicy())
-        client.connect(HOST, PORT, username=USER, password=PWORD)
-        print('Connection established!')
-        log.info('Connection established')
-        return client
-    except (Exception) as e:
-        print('Not possible to connect. Error:',e)
-        log.exception('An error occured to connect in Zurich server')
-        return False
-            
-def getLatestBuildNameFromServer(client, PATH_MW):
-
-    # Compare Modification time folder by folder
-    sftp = client.open_sftp()
-    try:
-        dir_MW = sftp.listdir_attr(PATH_MW.as_posix())
-        log.info(f'Getting latest modified folder from {dir_MW}')
-        latest = 0
-        latest_folder = None
-
-        for folder_attribute in dir_MW:
-            if folder_attribute.st_mtime > latest:
-                latest = folder_attribute.st_mtime # Flag from Paramiko lib: Modification Time 
-                latest_folder = folder_attribute.filename
-        log.info(f'Latest modified folder: {latest_folder}')
-        return path_manager(latest_folder)
-
-    except (EnvironmentError, IOError, OSError) as e:
-        print(e)
-        log.exception('An error occured to get latest build from server')
-
-def getLatestBuildDownloadLocally(latest_build, MW_VERSION):
-    status = localFile.pathControl(latest_build, MW_VERSION)
-
-    '''
-    0 - Go ahead and download
-    1 - It's already downloaded
-    2 - Go ahead to download it and create a Version control since it wasn't created yet
-    3 - Fail 
-    '''
-
-    if status == 0:
-        # Go ahead and download
-        log.info('Status == 0. Go ahead and download')
-        return True
-
-    elif status == 1:
-        # It's already downloaded
-        log.info('Status == 1. It is already downloaded')
-        return False       
-    
-    elif status == 2:
-        # Go ahead and download. Version control wasn't created yet
-        log.info('Status == 2. Go ahead and download. Version control was not created yet')
-        return True
-
-    elif status == 3:
-        # Fail
-        print('Please check if Version_control folder exists')
-        log.error('Status == 3. Fail (Version_control folder exist?).')
-        return False
-
-
 def getBuildNameFromDir(build_path):
     # Server pattern: 'Build6.x.x.x_0123456/'
     # After clean it: '6.x.x.x_0123456'
-    return path_manager(''.join(''.join(str(build_path).split('Build')).split('/'))) 
+    return path_manager(''.join(''.join(str(build_path).split('Build')).split('/')))
 
-def startPathCreator(client, build_name, PATH_MW, STB_MODEL):
+def startPathCreator(client, PATH_MW, STB_MODEL, local_build_folder):
 
     sftp = client.open_sftp()
     if(STB_MODEL):
-        build_path = PATH_MW / build_name / STB_MODEL # /nfs/OpentvOS/v5.x.x/NET/build_name/brand/
+        build_path = PATH_MW / STB_MODEL # /nfs/OpentvOS/v5.x.x/NET/Build6.x.x.x/brand/
+        
     elif not(STB_MODEL):
-        build_path = PATH_MW / build_name
+        build_path = PATH_MW
         
     print('Path:', build_path.as_posix())
     log.info(f'Path created to start download process: {build_path} ')
-    build_name_clean = getBuildNameFromDir(build_name) # Take build name without unnecessary words to persist on Build Number Control (txt)
+    #build_name_clean = getBuildNameFromDir(build_name) # Take build name without unnecessary words to persist on Build Number Control (txt)
 
     try:
         ### Handling MW 528 ###
@@ -139,7 +73,7 @@ def startPathCreator(client, build_name, PATH_MW, STB_MODEL):
             if not(folders.filename == PRODUCT_TO_NOT_DOWNLOAD_MW_528):
                 path_product_folder.append(folders.filename)
 
-        new_local_path = path_manager(localFolder.createLocalFolders(path_manager(localFolder.createBuildNameFolder(build_name_clean)), STB_MODEL)) # STB Model folder
+        new_local_path = path_manager(localFolder.createLocalFolders(local_build_folder, STB_MODEL)) # STB Model folder
                 
         # Loop to create all Build_Production_XPTO 
         for folder in path_product_folder:
@@ -197,53 +131,7 @@ def progressBarView(*args, **kwargs):
         log.exception('An error occured to use progress bar function')      
 
 
-def startDownloadProcess(PATH_ROOT, MW_VERSION, STB_MODEL):
-    client = connectionToServer()
-    if (client == False):
-        print('Finishing script...')
-    
-    else:
-        PATH_MW = path_manager.joinpath(PATH_ROOT, MW_VERSION, 'NET') #/nfs/OpentvOS/v5.x.x/NET/
+def startDownloadProcess(PATH_ROOT, MW_VERSION, STB_MODEL, NET, client, latestBuild_path, local_build_folder):
 
-        latestBuild = getLatestBuildNameFromServer(client, PATH_MW)
-        print('Latest Build from Server:', latestBuild)
-        status = getLatestBuildDownloadLocally(str(latestBuild.name), MW_VERSION)
-        
-        if(status == True):
-            startPathCreator(client, latestBuild, PATH_MW, STB_MODEL)
-        
-        elif(status == False):
-            print('Finishing script...')
-        
-        else:
-            print('Finishing script...')
-    client.close()    
-         
-'''
-if __name__ == '__main__':
-    STB_BRAND_528 = path_manager(STB_BRAND_528_SAGEM) 'dgci362_unified_glibc_bc'
-    MW_VERSION = path_manager(MW_VERSION_528) 'v5.2.8'
-    PATH_ROOT = path_manager(ROOT) '/nfs/OpentvOS'
-
-    PATH_MW_528 = path_manager.joinpath(PATH_ROOT, MW_VERSION, PATH_NET_FOLDER)'/nfs/OpentvOS/v5.2.8/NET/
-    STB_MODEL_MW_528 = path_manager(STB_BRAND_528) 'dgci362_unified_glibc_bc'
-
-    client = connectionToServer()
-    if (client == False):
-        print('Finishing script...')
-        
-    else:
-        latestBuild = getLatestBuildNameFromServer(client)
-        print('Latest Build from Server:', latestBuild)
-        status = getLatestBuildDownloadLocally(str(latestBuild.name))
-        
-        if(status == True):
-            startPathCreator(client, latestBuild)
-        
-        elif(status == False):
-            print('Finishing script...')
-        
-        else:
-            print('Finishing script...')
-    client.close()
-'''
+        PATH_MW = path_manager.joinpath(PATH_ROOT, MW_VERSION, NET, latestBuild_path) #/nfs/OpentvOS/v5.2.8/NET/Build6.x.x.x
+        startPathCreator(client, PATH_MW, STB_MODEL, local_build_folder)
