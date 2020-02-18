@@ -1,6 +1,5 @@
 
 from pathlib import Path as path_manager
-import pathlib
 import sys
 import logging
 

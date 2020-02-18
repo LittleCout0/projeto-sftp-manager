@@ -18,8 +18,8 @@ MW_VERSION_513 = path_manager('v5.1.3')
 MW_VERSION_524 = path_manager('v5.2.4')
 MW_VERSION_528 = path_manager('v5.2.8')
 STB_MW_528_LIST = ['dgci362_unified_glibc_bc', 'dci738net_glibc_bc']
-STB_MW_524_LIST = ['']
-STB_MW_513_LIST = ['']
+#STB_MW_524_LIST = [''] will be used on next implementation
+#STB_MW_513_LIST = [''] will be used on next implementation
 MW_VERSION_LIST = [MW_VERSION_513, MW_VERSION_524, MW_VERSION_528]
 
 ##### Log ###############################################################################################################################################
@@ -114,7 +114,7 @@ if __name__ == '__main__':
                 latestBuild_clean = getBuildNameFromDir(latestBuild_path) #Remove "Build" from name to create folder locally: 6.x.x.x
                 status = getLatestBuildDownloadLocally(str(latestBuild_clean), MW_VERSION_528)
                 if(status):
-                    local_build_folder = localFolder.createBuildNameFolder(latestBuild_clean)
+                    local_build_folder = localFolder.createBuildNameFolder(latestBuild_clean, MW_VERSION_528)
                     for model in STB_MW_528_LIST:
                         print(f'Latest Build from {MW} and {model}: {latestBuild_clean}')
                         log.info(f'Latest Build from {MW} and {model}: {latestBuild_clean}')
@@ -131,32 +131,3 @@ if __name__ == '__main__':
         print('Finishing script...')
     
     client.close()
-                                                
-                
-           
-           
-           
-           
-'''
-else:
-print('Finishing script...')
-
-else:
-print('Not implemented yet')
-log.info(f'Not implemented yet: {MW}')
-
-for MW in MW_VERSION_LIST:
-            if(MW == MW_VERSION_528):
-                latestBuild = getLatestBuildNameFromServer(client, MW_VERSION_528)
-                status = getLatestBuildDownloadLocally(str(latestBuild.name), MW_VERSION_528)
-        
-                if(status == True):
-                    for model in STB_MW_528_LIST:
-                        print(f'Latest Build from {MW} and {model}:', latestBuild)
-                        log.info(f'Latest Build from {MW} and {model}:', latestBuild)
-                        download(ROOT, MW_VERSION_528, model, NET, client)
-                    
-                localFile.createFileControl(str(latestBuild.name, MW_VERSION_528)
-    
-client.close()
-'''

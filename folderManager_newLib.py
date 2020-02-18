@@ -4,7 +4,11 @@ import logging
 
 debug = True # Used to avoid Traceback errors when Fails
 
-LOCAL_PATH = path_manager(r'Z:\01.Opentv5\00.Versions\NET\Release6.1')
+MW_DICT = {
+    'v5.2.8': path_manager(r'Z:\01.Opentv5\00.Versions\NET\Release6.1'),
+    'v5.2.4': path_manager(r'Z:\01.Opentv5\00.Versions\NET\Release4.1'),
+    'v5.1.3': path_manager(r'Z:\01.Opentv5\00.Versions\NET\Release2.5')
+}
 
 ##### Log environment ###############################################################################################################################################
 log = logging.getLogger(__name__)
@@ -15,14 +19,15 @@ file_handler.setFormatter(formatter)
 log.addHandler(file_handler)
 #####################################################################################################################################################################
 
-def createBuildNameFolder(build_name):
+def createBuildNameFolder(build_name, MW_VERSION):
+    LOCAL_PATH = MW_DICT.get(MW_VERSION)
     if(LOCAL_PATH.exists()):
         try:
             print(f'Creating {build_name} folder')
             path_manager.mkdir(path_manager.joinpath(LOCAL_PATH, build_name))
             log.info(f'Creating {build_name} created')
             return LOCAL_PATH / build_name
-        
+            
         except (EnvironmentError, IOError, OSError) as e:
             log.exception('An error occured to create build folder')
             print(e)
