@@ -3,6 +3,7 @@ import folderManager_newLib as localFolder
 from pathlib import Path as path_manager
 from tqdm import tqdm
 import logging
+import stat
 
 ##### Log environment ###############################################################################################################################################
 log = logging.getLogger(__name__)
@@ -17,6 +18,7 @@ log.addHandler(file_handler)
 
 # MW 528
 PRODUCT_TO_NOT_DOWNLOAD_MW_528 = 'build_product_sdk'
+PRODUCT_TO_NOT_DOWNLOAD_MW_524 = 'build_product_sdk'
 
 FOLDERS_TO_NOT_DOWNLOAD = [
     'release_netbrazil_4tnfx_uhd_hdcp_nasc_integration_OTA',
@@ -40,7 +42,9 @@ FILES_TO_NOT_DOWNLOAD = [
     'dci738net_usbpayload',
     'kernel_dci738net.ssv',
     'kernel_dci738net.ssv.tmm',
-    'vmlinux.bin'
+    'vmlinux.bin',
+    'build_product_sdk.tar.gz',
+    'build_product_release.tar.gz'
 ]
 
 
@@ -51,8 +55,8 @@ def getBuildNameFromDir(build_path):
     # After clean it: '6.x.x.x_0123456'
     return path_manager(''.join(''.join(str(build_path).split('Build')).split('/')))
 
-def startPathCreator(client, PATH_MW, STB_MODEL, local_build_folder):
-
+def startPathCreator(client, PATH_MW, STB_MODEL, local_build_folder, MW_VERSION):
+    is_folder_zip = False #MW 5.2.4 could be zip or not 
     sftp = client.open_sftp()
     if(STB_MODEL):
         build_path = PATH_MW / STB_MODEL # /nfs/OpentvOS/v5.x.x/NET/Build6.x.x.x/brand/
@@ -65,29 +69,57 @@ def startPathCreator(client, PATH_MW, STB_MODEL, local_build_folder):
     #build_name_clean = getBuildNameFromDir(build_name) # Take build name without unnecessary words to persist on Build Number Control (txt)
 
     try:
-        ### Handling MW 528 ###
-        #Get all Build_Production_XPTO folders (without attributes) from sftp (MW 5.2.8 only)
-        path_product_folder = []
-        for folders in sftp.listdir_attr(build_path.as_posix()):
-            if not(folders.filename == PRODUCT_TO_NOT_DOWNLOAD_MW_528):
-                path_product_folder.append(folders.filename)
+        if(MW_VERSION.name == 'v5.2.8'):
+            ### Handling MW 528 ###
+            #Get all Build_Production_XPTO folders (without attributes) from sftp (MW 5.2.8 only)
+            path_product_folder = []
+            for folders in sftp.listdir_attr(build_path.as_posix()):
+                if not(folders.filename == PRODUCT_TO_NOT_DOWNLOAD_MW_528):
+                    path_product_folder.append(folders.filename)
 
-        new_local_path = path_manager(localFolder.createLocalFolders(local_build_folder, STB_MODEL)) # STB Model folder
+            new_local_path = path_manager(localFolder.createLocalFolders(local_build_folder, STB_MODEL)) # STB Model folder
                 
-        # Loop to create all Build_Production_XPTO 
-        for folder in path_product_folder:
-            localFolder.createLocalFolders(new_local_path, folder)
+            # Loop to create all Build_Production_XPTO 
+            for folder in path_product_folder:
+                localFolder.createLocalFolders(new_local_path, folder)
 
-        # Create local sub-folders from Build_Production_XPTO
-        # /nfs/OpentvOS/v5.2.8/NET/build_name/STB_Model/build_production_XPTO
-        for folder in path_product_folder:
-            createLocalSubDirectories(sftp, path_manager.joinpath(build_path, path_manager(folder)).as_posix(), path_manager.joinpath(new_local_path, folder))
+            # Create local sub-folders from Build_Production_XPTO
+            # /nfs/OpentvOS/v5.2.8/NET/build_name/STB_Model/build_production_XPTO
+            for folder in path_product_folder:
+                createLocalSubDirectories(sftp, path_manager.joinpath(build_path, path_manager(folder)).as_posix(), path_manager.joinpath(new_local_path, folder), MW_VERSION, is_folder_zip)
+        
+        elif(MW_VERSION.name == 'v5.2.4'):
+            ### Handling MW 524 ###
+            #Check if is a file compacted or a folder 
+            path_product_folder = []
+                    
+            for folders in sftp.listdir_attr(build_path.as_posix()):
+                if(stat.S_ISREG(folders.st_mode)):
+                    is_folder_zip = True
+                              
+                elif(stat.S_ISDIR(folders.st_mode)):
+                    if not(folders.filename == PRODUCT_TO_NOT_DOWNLOAD_MW_524):
+                        path_product_folder.append(folders.filename)
+            
+            if(is_folder_zip):
+                downloadFiles(sftp, local_build_folder, build_path, MW_VERSION, is_folder_zip)
+            
+            if not(is_folder_zip):
+                new_local_path = path_manager(localFolder.createLocalFolders(local_build_folder, STB_MODEL)) # STB Model folder
+            
+                for folder in path_product_folder:
+                    localFolder.createLocalFolders(new_local_path, folder)
 
+                # Create local sub-folders from Build_Production_XPTO
+                # /nfs/OpentvOS/v5.2.8/NET/build_name/STB_Model/build_production_XPTO
+                for folder in path_product_folder:
+                    createLocalSubDirectories(sftp, path_manager.joinpath(build_path, path_manager(folder)).as_posix(), path_manager.joinpath(new_local_path, folder), MW_VERSION, is_folder_zip)
+                        
     except (EnvironmentError, IOError, OSError) as e:
         print(e)
         log.exception('An error occured to start download process')
 
-def createLocalSubDirectories(sftp, remote_dir, local_path):
+def createLocalSubDirectories(sftp, remote_dir, local_path, MW_VERSION, is_folder_zip):
     current_path = []
     remote_path = []
     
@@ -96,23 +128,49 @@ def createLocalSubDirectories(sftp, remote_dir, local_path):
             current_path.append(path_manager(localFolder.createLocalFolders(local_path, dir.filename)))
             remote_path.append(path_manager.joinpath(path_manager(remote_dir), dir.filename))
 
-    return downloadFiles(sftp, current_path, remote_path)
+    return downloadFiles(sftp, current_path, remote_path, MW_VERSION, is_folder_zip)
     
-def downloadFiles(sftp, current_path, remote_path):
+def downloadFiles(sftp, current_path, remote_path, MW_VERSION, is_folder_zip):
     file_name_for_progress_bar = "" # Not necessary, just a improve to progress bar
     callback_progressbar, progressbar = progressBarView(ascii=False, desc=file_name_for_progress_bar, unit='b', unit_scale=True)
     i = 0 # To control the current_path folders list
     
-    for remote_dir in remote_path:
-        print(remote_dir)
-        for remote_file in sftp.listdir_attr(remote_dir.as_posix()):
-            file_name_for_progress_bar = remote_file.filename            
+    # MW 5.2.8 has same folder structure since first version. 
+    if(MW_VERSION.name == 'v5.2.8'):
+        for remote_dir in remote_path:
+            print(remote_dir)
+            for remote_file in sftp.listdir_attr(remote_dir.as_posix()):
+                file_name_for_progress_bar = remote_file.filename            
+                if remote_file.filename not in FILES_TO_NOT_DOWNLOAD:
+                    print(remote_file.filename)
+                    sftp.get(path_manager.joinpath(remote_dir, remote_file.filename).as_posix(), path_manager.joinpath(current_path[i], remote_file.filename), callback_progressbar)     
+            log.info(f'Files downloaded:{path_manager.joinpath(current_path[i], remote_file.filename)}')
+            i += 1
+        progressbar.close()
+    
+    # MW 5.2.4 could have zip folder 
+    elif(MW_VERSION.name == 'v5.2.4' and is_folder_zip == True):
+        for remote_file in sftp.listdir_attr(remote_path.as_posix()):
             if remote_file.filename not in FILES_TO_NOT_DOWNLOAD:
                 print(remote_file.filename)
-                sftp.get(path_manager.joinpath(remote_dir, remote_file.filename).as_posix(), path_manager.joinpath(current_path[i], remote_file.filename), callback_progressbar)      
-        log.info(f'Files downloaded:{path_manager.joinpath(current_path[i], remote_file.filename)}')
-        i += 1
-    progressbar.close()
+                sftp.get(path_manager.joinpath(remote_path, remote_file.filename).as_posix(), path_manager.joinpath(current_path, remote_file.filename), callback_progressbar) 
+        
+                log.info(f'Files downloaded:{path_manager.joinpath(current_path, remote_file.filename)}')
+        progressbar.close()
+    
+    # Scenario that cover MW 5.2.4 when doesn't have zip folder
+    
+    elif(MW_VERSION.name == 'v5.2.4' and is_folder_zip == False):
+        for remote_dir in remote_path:
+            print(remote_dir)
+            for remote_file in sftp.listdir_attr(remote_dir.as_posix()):
+                file_name_for_progress_bar = remote_file.filename            
+                if remote_file.filename not in FILES_TO_NOT_DOWNLOAD:
+                    print(remote_file.filename)
+                    sftp.get(path_manager.joinpath(remote_dir, remote_file.filename).as_posix(), path_manager.joinpath(current_path[i], remote_file.filename), callback_progressbar)     
+            log.info(f'Files downloaded:{path_manager.joinpath(current_path[i], remote_file.filename)}')
+            i += 1
+        progressbar.close()
 
 
 def progressBarView(*args, **kwargs):
@@ -133,4 +191,4 @@ def progressBarView(*args, **kwargs):
 def startDownloadProcess(PATH_ROOT, MW_VERSION, STB_MODEL, NET, client, latestBuild_path, local_build_folder):
 
         PATH_MW = path_manager.joinpath(PATH_ROOT, MW_VERSION, NET, latestBuild_path) #/nfs/OpentvOS/v5.2.8/NET/Build6.x.x.x
-        startPathCreator(client, PATH_MW, STB_MODEL, local_build_folder)
+        startPathCreator(client, PATH_MW, STB_MODEL, local_build_folder, MW_VERSION)

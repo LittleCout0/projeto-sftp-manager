@@ -20,7 +20,7 @@ log.addHandler(file_handler)
 #####################################################################################################################################################################
 
 def createBuildNameFolder(build_name, MW_VERSION):
-    LOCAL_PATH = MW_DICT.get(MW_VERSION)
+    LOCAL_PATH = MW_DICT.get(MW_VERSION.name)
     if(LOCAL_PATH.exists()):
         try:
             print(f'Creating {build_name} folder')

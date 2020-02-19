@@ -20,7 +20,7 @@ MW_VERSION_528 = path_manager('v5.2.8')
 STB_MW_528_LIST = ['dgci362_unified_glibc_bc', 'dci738net_glibc_bc']
 #STB_MW_524_LIST = [''] will be used on next implementation
 #STB_MW_513_LIST = [''] will be used on next implementation
-MW_VERSION_LIST = [MW_VERSION_513, MW_VERSION_524, MW_VERSION_528]
+MW_VERSION_LIST = [MW_VERSION_528, MW_VERSION_524, MW_VERSION_513]
 
 ##### Log ###############################################################################################################################################
 log = logging.getLogger(__name__)
@@ -121,8 +121,20 @@ if __name__ == '__main__':
                         download(ROOT, MW_VERSION_528, model, NET, client, latestBuild_path, local_build_folder)
                     
                     localFile.createFileControl(latestBuild_clean, MW_VERSION_528)
-                    print('Control file created')                    
+                    print('Control file created')   
                 
+            elif(MW == MW_VERSION_524):
+                latestBuild_path = getLatestBuildNameFromServer(client, path_manager.joinpath(ROOT, MW_VERSION_524, NET)) #Receive the build path: Build4.x.x.x
+                latestBuild_clean = getBuildNameFromDir(latestBuild_path) #Remove "Build" from name to create folder locally: 4.x.x.x
+                status = getLatestBuildDownloadLocally(str(latestBuild_clean), MW_VERSION_524)
+                if(status):
+                    local_build_folder = localFolder.createBuildNameFolder(latestBuild_clean, MW_VERSION_524)
+                    print(f'Latest Build from {MW}: {latestBuild_clean}')
+                    log.info(f'Latest Build from {MW}: {latestBuild_clean}')
+                    download(ROOT, MW_VERSION_524, '', NET, client, latestBuild_path, local_build_folder)
+                    localFile.createFileControl(latestBuild_clean, MW_VERSION_524)
+                    print('Control file created')
+                  
                 else:
                     print('Finishing script...')
                     client.close()       
