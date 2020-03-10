@@ -86,7 +86,7 @@ def getLatestBuildNameFromServer(client, PATH_MW):
     sftp = client.open_sftp()
     try:
         dir_MW = sftp.listdir_attr(PATH_MW.as_posix())
-        log.info(f'Getting latest modified folder from {dir_MW}')
+        log.info(f'Getting latest modified folder...')
         latest = 0
         latest_folder = None
         
@@ -94,7 +94,9 @@ def getLatestBuildNameFromServer(client, PATH_MW):
         for folder_attribute in sftp.listdir_attr(PATH_MW.as_posix()):
             if ('NET' in str(folder_attribute.filename).split('_') and folder_attribute.st_mtime > latest):
                 dir_MW = path_manager.joinpath(path_manager.joinpath(PATH_MW, folder_attribute.filename))
-                 
+                
+            log.info(f'NET folder available. Including in the path.')
+                                 
         for folder_attribute in  sftp.listdir_attr(dir_MW.as_posix()):
             if folder_attribute.st_mtime > latest:
                 latest = folder_attribute.st_mtime  # Flag from Paramiko lib: Modification Time
