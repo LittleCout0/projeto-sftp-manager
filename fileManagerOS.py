@@ -1,4 +1,3 @@
-
 from pathlib import Path as path_manager
 import sys
 import logging
@@ -6,15 +5,15 @@ import logging
 debug = True # Used to avoid Traceback errors when Fails
 
 PATH_FOLDER = path_manager(r"Z:\01.Opentv5\16.Version_control")
-FILE_NAME_MW528 = "version_control_528.txt"
-FILE_NAME_MW524 = "version_control_524.txt"
-FILE_NAME_MW513 = "version_control_513.txt"
-MW_VERSION_LIST = ['v5.2.8', 'v5.2.4','v5.1.3']
+FILE_NAME_MW528_OS_BUILD = "version_control_528_OS_BUILD.txt"
+FILE_NAME_MW524_OS_BUILD = "version_control_524_OS_BUILD.txt"
+FILE_NAME_MW513_OS_BUILD = "version_control_513_OS_BUILD.txt"
+MW_VERSION_LIST = ['NET_R6', 'NET_R4','NET_R2']
 
 ##### Log environment #################################################################
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-file_handler = logging.FileHandler('logs/file_manager.log')
+file_handler = logging.FileHandler('logs/file_managerOS.log')
 formatter = logging.Formatter('%(asctime)s: %(levelname)s : %(name)s : %(message)s')
 file_handler.setFormatter(formatter)
 log.addHandler(file_handler)
@@ -28,7 +27,7 @@ log.addHandler(file_handler)
 '''
 
 def pathControl(LATEST_BUILD, MW_VERSION):
-    if(MW_VERSION.name in MW_VERSION_LIST):
+    if(MW_VERSION in MW_VERSION_LIST):
         PATH_COMPLETE = path_manager.joinpath(validateMWVersion(MW_VERSION))
 
         if PATH_FOLDER.exists() and PATH_COMPLETE.exists():
@@ -48,7 +47,6 @@ def pathControl(LATEST_BUILD, MW_VERSION):
         
         else:
             print('File not exist. Creating a new one...')
-            #createFileControl(LATEST_BUILD, PATH_COMPLETE)
             log.info('File does not exist. Creating a new one.')
             return 2
     else:
@@ -58,14 +56,14 @@ def pathControl(LATEST_BUILD, MW_VERSION):
         
         
 def validateMWVersion(MW_VERSION):
-    if(MW_VERSION.name == 'v5.2.8'):
-        return PATH_FOLDER / FILE_NAME_MW528
+    if(MW_VERSION == 'NET_R6'):
+        return PATH_FOLDER / FILE_NAME_MW528_OS_BUILD
    
-    elif(MW_VERSION.name == 'v5.2.4'):
-        return PATH_FOLDER / FILE_NAME_MW524
+    elif(MW_VERSION == 'NET_R4'):
+        return PATH_FOLDER / FILE_NAME_MW524_OS_BUILD
         
-    elif(MW_VERSION.name == 'v5.1.3'):
-        return PATH_FOLDER / FILE_NAME_MW513
+    elif(MW_VERSION == 'NET_R2'):
+        return PATH_FOLDER / FILE_NAME_MW513_OS_BUILD
     
 
 def checkLatestBuildDownloaded(LATEST_BUILD, PATH_COMPLETE):
@@ -75,13 +73,11 @@ def checkLatestBuildDownloaded(LATEST_BUILD, PATH_COMPLETE):
             if OLDER_BUILD == '':
                 print('File is empty. Creating a new one with build name received:',LATEST_BUILD)
                 log.warning(f'File is empty. Creating a new one with build name {LATEST_BUILD}')
-                #createFileControl(LATEST_BUILD, PATH_COMPLETE)
                 return 2
             elif OLDER_BUILD != LATEST_BUILD and OLDER_BUILD != '':
                 print(f'Build {LATEST_BUILD} received is different of {OLDER_BUILD} from history.')
                 print('Updating latest build from local file...')
                 log.info(f'Updating latest build {LATEST_BUILD} from local file')
-                #createFileControl(LATEST_BUILD, PATH_COMPLETE)
                 return 0
             else:
                 print(f'Build {LATEST_BUILD} received is the same of {OLDER_BUILD} from history.')

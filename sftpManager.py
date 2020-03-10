@@ -17,9 +17,10 @@ NET = path_manager('NET')
 MW_VERSION_513 = path_manager('v5.1.3')
 MW_VERSION_524 = path_manager('v5.2.4')
 MW_VERSION_528 = path_manager('v5.2.8')
-STB_MW_528_LIST = ['dgci362_unified_glibc_bc', 'dci738net_glibc_bc']
-#STB_MW_524_LIST = [''] will be used on next implementation
-#STB_MW_513_LIST = [''] will be used on next implementation
+STB_MW_528_LIST = [
+    'dgci362_unified_glibc_bc', 
+    'dci738net_glibc_bc'
+]
 MW_VERSION_LIST = [MW_VERSION_528, MW_VERSION_524, MW_VERSION_513]
 
 ##### Log ###############################################################################################################################################
@@ -88,8 +89,13 @@ def getLatestBuildNameFromServer(client, PATH_MW):
         log.info(f'Getting latest modified folder from {dir_MW}')
         latest = 0
         latest_folder = None
-
-        for folder_attribute in dir_MW:
+        
+        # Checking if a NET folder is there. Sometimes Build team put a folder with this name
+        for folder_attribute in sftp.listdir_attr(PATH_MW.as_posix()):
+            if ('NET' in str(folder_attribute.filename).split('_') and folder_attribute.st_mtime > latest):
+                dir_MW = path_manager.joinpath(path_manager.joinpath(PATH_MW, folder_attribute.filename))
+                 
+        for folder_attribute in  sftp.listdir_attr(dir_MW.as_posix()):
             if folder_attribute.st_mtime > latest:
                 latest = folder_attribute.st_mtime  # Flag from Paramiko lib: Modification Time
                 latest_folder = folder_attribute.filename
@@ -134,11 +140,19 @@ if __name__ == '__main__':
                     download(ROOT, MW_VERSION_524, '', NET, client, latestBuild_path, local_build_folder)
                     localFile.createFileControl(latestBuild_clean, MW_VERSION_524)
                     print('Control file created')
-                  
-                else:
-                    print('Finishing script...')
-                    client.close()       
-
+            
+            elif(MW == MW_VERSION_513):
+                latestBuild_path = getLatestBuildNameFromServer(client, path_manager.joinpath(ROOT, MW_VERSION_513, NET)) #Receive the build path: Build2.x.x.x
+                latestBuild_clean = getBuildNameFromDir(latestBuild_path) #Remove "Build" from name to create folder locally: 2.x.x.x
+                status = getLatestBuildDownloadLocally(str(latestBuild_clean), MW_VERSION_513)
+                if(status):
+                    local_build_folder = localFolder.createBuildNameFolder(latestBuild_clean, MW_VERSION_513)
+                    print(f'Latest Build from {MW}: {latestBuild_clean}')
+                    log.info(f'Latest Build from {MW}: {latestBuild_clean}')
+                    download(ROOT, MW_VERSION_513, '', NET, client, latestBuild_path, local_build_folder)
+                    localFile.createFileControl(latestBuild_clean, MW_VERSION_513)
+                    print('Control file created')
+                    print('Finished')
     else:
         print('Finishing script...')
     

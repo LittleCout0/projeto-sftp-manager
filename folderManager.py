@@ -1,83 +1,90 @@
-# -*- coding: utf-8 -*-
-import os
+from pathlib import Path as path_manager
+import sys
+import logging
 
+debug = False # Used to avoid Traceback errors when Fails
 
-'''caminho até as Builds: \\10.4.164.16\\sao\\01.Opentv5\\00.Versions\\NET\\6.1'''
-path_sub_folder_release = ['release_netbrazil_4tnfx_uhd_hdcp_nasc_integration_noOTA/','release_netbrazil_4tnfx_uhd_hdcp_nasc_integration_OTA/','release_netbrazil_4tnfx_uhd_hdcp_nasc_production_OTA/']
-path_sub_folder_dev = ['dev_netbrazil_4tnfx_uhd_hdcp_nasc_integration_noOTA/','dev_netbrazil_4tnfx_uhd_hdcp_nasc_integration_OTA/','dev_netbrazil_4tnfx_uhd_hdcp_nasc_production_OTA/']
-folders_name = ['build_product_release/','build_product_sdk/','build_product_DEV/'] #variavel que virá do sftp
-sub_folder_name = ['release_netbrazil_4tnfx_uhd_hdcp_nasc_integration_noOTA/','release_netbrazil_4tnfx_uhd_hdcp_nasc_integration_OTA/','release_netbrazil_4tnfx_uhd_hdcp_nasc_production_OTA/']#variavel que virá do sftp
-PATH = r'C:/Users/William/Desktop/SFTP Project/' 
+MW_DICT = {
+    'v5.2.8': path_manager(r'Z:\01.Opentv5\00.Versions\NET\Release6.1'),
+    'v5.2.4': path_manager(r'Z:\01.Opentv5\00.Versions\NET\Release4.1'),
+    'v5.1.3': path_manager(r'Z:\01.Opentv5\00.Versions\NET\Release2.5')
+}
 
-def createBuildNameFolder(build_name):
-    if(os.path.exists(PATH)):
-        print('Creating %s folder' % build_name)
-        os.mkdir(PATH+build_name)
-        return os.path.join(PATH, build_name)
+##### Log environment ###############################################################################################################################################
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+file_handler = logging.FileHandler('logs/folder_manager.log')
+formatter = logging.Formatter('%(asctime)s: %(levelname)s : %(name)s : %(message)s')
+file_handler.setFormatter(formatter)
+log.addHandler(file_handler)
+#####################################################################################################################################################################
+
+def createBuildNameFolder(build_name, MW_VERSION):
+    LOCAL_PATH = MW_DICT.get(MW_VERSION.name)
+    if(LOCAL_PATH.exists()):
+        try:
+            print(f'Creating {build_name} folder')
+            path_manager.mkdir(path_manager.joinpath(LOCAL_PATH, build_name))
+            log.info(f'Creating {build_name} created')
+            return LOCAL_PATH / build_name
+            
+        except (EnvironmentError, IOError, OSError) as e:
+            log.exception('An error occured to create build folder')
+            print(e)
     
-    elif not(os.path.exists(PATH)):
+    elif not(LOCAL_PATH.exists()):
         print('Path not found.')
+        log.warning(f'Path not found: {LOCAL_PATH}')
+
+def createSTBModelFolder(new_path, stb_model):
+    try:
+        print(f'Creating {stb_model} folder')
+        path_manager.mkdir(new_path / stb_model)
+        log.info(f'Creating {stb_model} folder')
+        return new_path / stb_model
+    
+    except (EnvironmentError, IOError, OSError) as e:
+        log.exception('An error occured to create STB model folder')
+        print(e)
+
+def createBuildTypeFolder(new_path, mw_type):
+    try:
+        print(f'Creating {mw_type} folder')
+        path_manager.mkdir(new_path / mw_type)
+        log.info(f'Creating {mw_type} folder')
+        return new_path / mw_type
+    
+    except (EnvironmentError, IOError, OSError) as e:
+        log.exception('An error occured to create build type folder')
+        print(e)
         
 def createLocalFolders(new_path,folder_name):
     try:
-        os.mkdir(new_path+folder_name)
-        return os.path.join(new_path, folder_name)
-    except OSError as e:
-        print(e)
-      
+        path_manager.mkdir(new_path / folder_name)
+        log.info(f'Creating local folder {folder_name}')
+        return new_path / folder_name
     
+    except (EnvironmentError, IOError, OSError) as e:
+        log.exception('An error occured to create local folders')
+        print(e)
+
+
 def createLocalSubFolders(new_path, sub_folder_name):
     try:
-        os.mkdir(new_path+sub_folder_name)    
-    except OSError as e:
-        print(e)
- 
-new_path = os.path.join(PATH, createBuildNameFolder('local/'))
-path_sub_folder = path_sub_folder_release
-path_product_folder = folders_name
-for sdk in path_product_folder:
-    if 'build_product_sdk/' == sdk:
-        path_product_folder.remove(sdk)
-        
-for folder_name in path_product_folder:
-    try:
-        wa_new_path = new_path #WorkAround!
-        new_path = os.path.join(new_path, createLocalFolders(new_path, folder_name))
-        for sub_folder_name in path_sub_folder:
-            createLocalSubFolders(new_path,sub_folder_name)          
-        path_sub_folder = path_sub_folder_dev
-        new_path = wa_new_path
-    except Exception as e:
-        print(e)
+        path_manager.mkdir(new_path / sub_folder_name)
+        log.info(f'Creating sub folder {sub_folder_name}')
+        return new_path / sub_folder_name
     
-'''
-def makeDir_old(list_dir_name):       
-    if os.path.exists(PATH):
-        #new_path_folder = PATH
-        try:
-            print('Creating %d folders' % len(list_dir_name))
-            for folder_name in list_dir_name: #list_dir_name.filename:
-                #os.mkdir(new_path_folder.join(folder_name.filename))
-                print(folder_name)
-                os.mkdir(PATH+folder_name)
-                SUB_DIR_NAMES = os.path.join(PATH, folder_name)
-                #new_path_folder = os.path.join(new_path_folder, folder_name.filename)
-                #'sub_path_folder = os.path.join(new_path_folder, folder_name)
-                #for sub_folder_name in list_sub_dir_name: #list_sub_dir_name.filename:
-                    #os.mkdir(new_path_folder.join(sub_folder_name.filename))
-                #    print(list_sub_dir_name)
-                #    os.mkdir(sub_path_folder+sub_folder_name)'            
-        except Exception as e:
-            print(e)
-    elif not(path.exists(PATH)):
-        print('Path not found.')
-
-def makeSubDir_old(list_sub_dir_name):
-    try:
-        #sub_path_folder = os.path.join(new_path_folder, folder_name)
-        for sub_folder_name in SUB_DIR_NAMES: #list_sub_dir_name.filename:
-            #os.mkdir(new_path_folder.join(sub_folder_name.filename))
-            print(list_sub_dir_name)
-            os.mkdir(SUB_DIR_NAMES+sub_folder_name)    
-    except Exception as e:
-        print(e)'''
+    except (EnvironmentError, IOError, OSError) as e:
+        log.exception('An error occured to create sub-folders')
+        print(e)
+  
+# Function to not print traceback unless debug is True
+def exceptionHandler(exception_type, exception, traceback, debug_hook=sys.excepthook):
+    if debug:
+        print('\n*** Error ***')
+        # Display all exceptions catched using debug_hook
+        debug_hook(exception_type, exception, traceback)
+    else:
+        print(f'\t{exception_type.__name__}: {exception}')# Exception.name: exception
+sys.excepthook = exceptionHandler
