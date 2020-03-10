@@ -1,5 +1,5 @@
 from paramiko import SSHClient, AutoAddPolicy
-import folderManager_newLib as localFolder
+import folderManager as localFolder
 from pathlib import Path as path_manager
 from tqdm import tqdm
 import logging

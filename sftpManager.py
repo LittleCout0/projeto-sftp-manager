@@ -1,8 +1,8 @@
-from downloadManager_newLib import startDownloadProcess as download
+from downloadManager import startDownloadProcess as download
 from paramiko import SSHClient, AutoAddPolicy
 from pathlib import Path as path_manager
-import fileManager_newLib as localFile
-import folderManager_newLib as localFolder
+import fileManager as localFile
+import folderManager as localFolder
 import logging
 
 ##### Connection  ###############################################################################################################################################
