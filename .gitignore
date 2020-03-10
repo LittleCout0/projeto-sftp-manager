@@ -6,3 +6,5 @@ test*
 __pycache__
 *.bat
 logs/
+regex
+SFTP_Manager.txt
