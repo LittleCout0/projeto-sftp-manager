@@ -26,7 +26,7 @@ MW_VERSION_LIST = [MW_VERSION_528, MW_VERSION_524, MW_VERSION_513]
 ##### Log ###############################################################################################################################################
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-file_handler = logging.FileHandler('logs/main_file_test.log')
+file_handler = logging.FileHandler('logs/sftpManager.log')
 formatter = logging.Formatter(
     '%(asctime)s: %(levelname)s : %(name)s : %(message)s')
 file_handler.setFormatter(formatter)
