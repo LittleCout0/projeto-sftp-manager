@@ -164,17 +164,7 @@ def startPathCreator(client, PATH_MW, STB_MODEL, local_build_folder, MW_VERSION)
             
             if(is_folder_zip):
                 downloadFiles(sftp, local_build_folder, build_path, MW_VERSION, is_folder_zip)
-            '''
-            if not(is_folder_zip):
-                folders_dict, remote_path = createSubDirectories513(sftp, local_build_folder, build_path)
-                for remote_dir in remote_path:
-                    for remote_file in sftp.listdir_attr(remote_dir.as_posix()):
-                        model = ngCleanModelName(str(path_manager(remote_dir).stem))
-                        # Creating folder for Chuleta's MW5.1.3 pattern : Model > Tuner > Remote Folder (eg.: Humax > 2T > humax7430_uclibc_bc_netbrazil_2t_release_hdcp_engg_dota)
-                        new_local_path = path_manager(localFolder.createLocalFolders(folders_dict.get(''.join(model)), remote_file.filename))
-                        print(new_local_path)
-                        downloadFiles(sftp, new_local_path, path_manager.joinpath(build_path, remote_file.filename), MW_VERSION, is_folder_zip)
-            '''
+
             if not(is_folder_zip):
                 folders_dict, remote_path = createSubDirectories513(sftp, local_build_folder, build_path)
                 for remote_dir in remote_path:
