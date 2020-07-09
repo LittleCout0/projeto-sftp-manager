@@ -1,8 +1,7 @@
 from pathlib import Path as path_manager
 import urllib.request
 from tqdm import tqdm
-import fileManagerOS as localFile
-import folderManagerOS as localFolder
+from OpenStack import folderManagerOS as localFolder, fileManagerOS as localFile
 import win32com.client
 import re
 import logging
